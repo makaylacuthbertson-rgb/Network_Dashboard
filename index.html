@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Network Dashboard - External Ecosystem Partners</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/BMW.svg/1200px-BMW.svg.png" alt="BMW" class="bmw-logo"> External Ecosystem Partners</h1>
+                <p>Manage and track your business relationships</p>
+            </div>
+            <button class="btn btn-primary" onclick="openAddPartnerModal()">+ Add Partner</button>
+        </header>
+
+        <!-- Search and Filter Section -->
+        <div class="controls-section">
+            <div class="search-box">
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    placeholder="Search partners by organization or contact name..."
+                    onkeyup="filterPartners()"
+                >
+            </div>
+            <div class="filter-controls">
+                <select id="filterRole" onchange="filterPartners()">
+                    <option value="">All Roles</option>
+                    <option value="Supplier">Supplier</option>
+                    <option value="Customer">Customer</option>
+                    <option value="Community Partner">Community Partner</option>
+                    <option value="University Partner">University Partner</option>
+                    <option value="Investor">Investor</option>
+                    <option value="Vendor">Vendor</option>
+                    <option value="Service Provider">Service Provider</option>
+                    <option value="Technology Partner">Technology Partner</option>
+                    <option value="Other">Other</option>
+                </select>
+                <select id="filterLocation" onchange="filterPartners()">
+                    <option value="">All Locations</option>
+                </select>
+            </div>
+            <button class="btn btn-secondary" onclick="exportData()">Export</button>
+            <button class="btn btn-secondary" onclick="importData()">Import</button>
+            <button class="btn btn-secondary" onclick="openScrapingModal()">Find Events</button>
+        </div>
+
+        <!-- View Toggle -->
+        <div class="view-toggle">
+            <button class="view-btn active" onclick="switchView('grid')" data-view="grid">
+                Grid
+            </button>
+            <button class="view-btn" onclick="switchView('list')" data-view="list">
+                List
+            </button>
+            <button class="view-btn" onclick="switchView('table')" data-view="table">
+                Table
+            </button>
+            <button class="view-btn" onclick="switchView('calendar')" data-view="calendar">
+                Calendar
+            </button>
+        </div>
+
+        <!-- Partners Grid View -->
+        <div id="gridView" class="view-container">
+            <div id="partnerGrid" class="partner-grid">
+                <!-- Partner cards will be inserted here -->
+            </div>
+        </div>
+
+        <!-- Partners List View -->
+        <div id="listView" class="view-container hidden">
+            <div id="partnerList" class="partner-list">
+                <!-- Partner list items will be inserted here -->
+            </div>
+        </div>
+
+        <!-- Partners Table View -->
+        <div id="tableView" class="view-container hidden">
+            <div class="table-responsive">
+                <table id="partnerTable" class="partner-table">
+                    <thead>
+                        <tr>
+                            <th onclick="sortTable('organization')">Organization ↕</th>
+                            <th onclick="sortTable('location')">Location ↕</th>
+                            <th onclick="sortTable('role')">Main Role ↕</th>
+                            <th>Key Contact</th>
+                            <th>Last Meeting</th>
+                            <th>Next Event</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="partnerTableBody">
+                        <!-- Table rows will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Calendar View -->
+        <div id="calendarView" class="view-container hidden">
+            <div class="calendar-section">
+                <div class="calendar-header">
+                    <button class="btn btn-secondary" onclick="previousMonth()">Previous</button>
+                    <h2 id="currentMonth"></h2>
+                    <button class="btn btn-secondary" onclick="nextMonth()">Next</button>
+                    <button id="teamEventsFilterBtn" class="btn btn-secondary" onclick="toggleTeamRelevantFilter()">Team Relevant Only</button>
+                    <button class="btn btn-primary" onclick="openAddEventModal()">Add Event</button>
+                </div>
+                <div id="calendarGrid" class="calendar-grid">
+                    <!-- Calendar will be rendered here -->
+                </div>
+            </div>
+            <div class="upcoming-events-sidebar">
+                <h3>Upcoming Events</h3>
+                <div id="upcomingEventsList" class="upcoming-events-list">
+                    <!-- Upcoming events will be listed here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state">
+            <div class="empty-icon"></div>
+            <h2>No partners yet</h2>
+            <p>Start building your network by adding your first partner</p>
+            <button class="btn btn-primary" onclick="openAddPartnerModal()">Add Your First Partner</button>
+        </div>
+    </div>
+
+    <!-- Add/Edit Partner Modal -->
+    <div id="partnerModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add New Partner</h2>
+                <button class="close-btn" onclick="closeModal()">&times;</button>
+            </div>
+            <form id="partnerForm" onsubmit="savePartner(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="organization">Organization Name *</label>
+                        <input type="text" id="organization" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="location">Location *</label>
+                        <input type="text" id="location" placeholder="City, Country" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="mainRole">Main Role/Classification *</label>
+                        <select id="mainRole" required onchange="toggleOtherRoleField()">
+                            <option value="">Select a role</option>
+                            <option value="Supplier">Supplier</option>
+                            <option value="Customer">Customer</option>
+                            <option value="Community Partner">Community Partner</option>
+                            <option value="University Partner">University Partner</option>
+                            <option value="Investor">Investor</option>
+                            <option value="Vendor">Vendor</option>
+                            <option value="Service Provider">Service Provider</option>
+                            <option value="Technology Partner">Technology Partner</option>
+                            <option value="Other">Other</option>
+                        </select>
+                        <input 
+                            type="text" 
+                            id="otherRoleField" 
+                            placeholder="Please specify the role..." 
+                            style="display: none; margin-top: 10px;"
+                        >
+                    </div>
+                    <div class="form-group">
+                        <label for="expertise">What They're Good At *</label>
+                        <textarea id="expertise" placeholder="e.g., Cloud Services, Supply Chain, etc." required></textarea>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="website">Website URL</label>
+                        <input type="url" id="website" placeholder="https://example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="industry">Industry/Sector</label>
+                        <input type="text" id="industry" placeholder="e.g., Technology, Manufacturing">
+                    </div>
+                </div>
+
+                <!-- Key Contacts Section -->
+                <div class="form-group">
+                    <label>Key Contacts</label>
+                    <div id="contactsList" class="contacts-list">
+                        <!-- Contact fields will be added here -->
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-small" onclick="addContactField()">+ Add Contact</button>
+                </div>
+
+                <!-- Events Section -->
+                <div class="form-group">
+                    <label>Past Events/Meetings</label>
+                    <div id="pastEventsList" class="events-list">
+                        <!-- Past events will be added here -->
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-small" onclick="addPastEventField()">+ Add Past Event</button>
+                </div>
+
+                <div class="form-group">
+                    <label>Upcoming Events/Meetings</label>
+                    <div id="upcomingEventsList" class="events-list">
+                        <!-- Upcoming events will be added here -->
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-small" onclick="addUpcomingEventField()">+ Add Upcoming Event</button>
+                </div>
+
+                <!-- Additional Notes -->
+                <div class="form-group">
+                    <label for="notes">Additional Notes</label>
+                    <textarea id="notes" placeholder="Any other relevant information..."></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="nextMeetingDate">Next Meeting Date</label>
+                        <input type="date" id="nextMeetingDate">
+                    </div>
+                    <div class="form-group">
+                        <label for="nextMeetingTime">Next Meeting Time</label>
+                        <input type="time" id="nextMeetingTime">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="partnerValue">Partner Value/Strategic Importance</label>
+                    <select id="partnerValue">
+                        <option value="">Select importance level</option>
+                        <option value="High">High Priority</option>
+                        <option value="Medium">Medium Priority</option>
+                        <option value="Low">Low Priority</option>
+                    </select>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Partner</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- View Partner Details Modal -->
+    <div id="detailsModal" class="modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="detailsTitle"></h2>
+                <button class="close-btn" onclick="closeDetailsModal()">&times;</button>
+            </div>
+            <div id="detailsContent" class="details-content">
+                <!-- Details will be inserted here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Event Modal -->
+    <div id="eventModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="eventModalTitle">Add Event</h2>
+                <button class="close-btn" onclick="closeEventModal()">&times;</button>
+            </div>
+            <form id="eventForm" onsubmit="saveEvent(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="eventName">Event Name *</label>
+                        <input type="text" id="eventName" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventPartner">Host Organization *</label>
+                        <select id="eventPartner" required>
+                            <option value="">Select a partner</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="eventStartDate">Start Date *</label>
+                        <input type="date" id="eventStartDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventStartTime">Start Time *</label>
+                        <input type="time" id="eventStartTime" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="eventEndDate">End Date *</label>
+                        <input type="date" id="eventEndDate" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventEndTime">End Time *</label>
+                        <input type="time" id="eventEndTime" required>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="eventLocation">Location *</label>
+                        <input type="text" id="eventLocation" placeholder="City, State or Virtual" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="eventRegistrationLink">Registration Link</label>
+                        <input type="url" id="eventRegistrationLink" placeholder="https://...">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="eventDescription">Description</label>
+                    <textarea id="eventDescription" placeholder="Event details..."></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="eventCost">Cost</label>
+                        <input type="number" id="eventCost" placeholder="0.00" min="0" step="0.01">
+                    </div>
+                    <div class="form-group" style="padding-top: 28px;">
+                        <label for="teamRelevant" style="display: flex; align-items: center; gap: 10px;">
+                            <input type="checkbox" id="teamRelevant" style="width: auto;">
+                            Team Relevant Event
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Team Members Attending</label>
+                    <div id="attendeesList" class="attendees-list">
+                        <!-- Attendees will be added here -->
+                    </div>
+                    <button type="button" class="btn btn-secondary btn-small" onclick="addAttendeeField()">+ Add Team Member</button>
+                </div>
+
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeEventModal()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Event</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Web Scraping Modal -->
+    <div id="scrapingModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Find Events - Web Search</h2>
+                <button class="close-btn" onclick="closeScrapingModal()">&times;</button>
+            </div>
+            <div class="scraping-content">
+                <div class="form-group">
+                    <label for="searchKeywords">Search Keywords *</label>
+                    <input type="text" id="searchKeywords" placeholder="e.g., tech conference, networking event, summit" required>
+                </div>
+                <div class="form-group">
+                    <label for="searchLocation">Location (Optional)</label>
+                    <input type="text" id="searchLocation" placeholder="e.g., Greenville, SC">
+                </div>
+                <div class="form-group">
+                    <label for="searchTimeframe">Timeframe *</label>
+                    <select id="searchTimeframe">
+                        <option value="week">This Week</option>
+                        <option value="month">This Month</option>
+                        <option value="quarter">This Quarter</option>
+                        <option value="year">This Year</option>
+                    </select>
+                </div>
+                <div id="scrapingResults" class="scraping-results" style="display: none;">
+                    <h3>Search Results</h3>
+                    <div id="resultsList"></div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" onclick="closeScrapingModal()">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="performWebSearch()">Search Events</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
